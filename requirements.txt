@@ -2,4 +2,3 @@ streamlit
 openai
 python-dotenv
 qdrant-client
-base64
