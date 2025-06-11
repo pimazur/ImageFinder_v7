@@ -130,6 +130,8 @@ def save_image(file_path, uploaded_file):
 #
 # MAIN
 #
+st.set_page_config(page_title='Image Finder')
+
 if not st.session_state.get("openai_api_key"):
     if "OPENAI_API_KEY" in env:
         st.session_state["openai_api_key"] = env["OPENAI_API_KEY"]
@@ -147,7 +149,6 @@ if not st.session_state.get("openai_api_key"):
 IMAGES_PATH.mkdir(exist_ok=True)
 assure_db_collection_exists()
 
-st.set_page_config(page_title='Image Finder')
 st.header('Image Finder')
 st.write(
     'Witaj w Image Finder! Możesz tu zapisywać ' \
