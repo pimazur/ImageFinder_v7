@@ -8,12 +8,13 @@ from openai import OpenAI
 import base64
 
 
+
 env = dotenv_values(".env")
 
-if 'QDRANT_URL' in st.secrets:
-    env['QDRANT_URL'] = st.secrets['QDRANT_URL']
-if 'QDRANT_API_KEY' in st.secrets:
-    env['QDRANT_API_KEY'] = st.secrets['QDRANT_API_KEY']
+# if 'QDRANT_URL' in st.secrets:
+#     env['QDRANT_URL'] = st.secrets['QDRANT_URL']
+# if 'QDRANT_API_KEY' in st.secrets:
+#     env['QDRANT_API_KEY'] = st.secrets['QDRANT_API_KEY']
 
 
 EMBEDDING_MODEL = "text-embedding-3-large"
@@ -146,8 +147,10 @@ if not st.session_state.get("openai_api_key"):
 if not st.session_state.get("openai_api_key"):
     st.stop()
 
+
 IMAGES_PATH.mkdir(exist_ok=True)
 assure_db_collection_exists()
+
 
 st.header('Image Finder')
 st.write(
@@ -160,18 +163,29 @@ st.write(
 if 'uploaded_image' not in st.session_state:
     st.session_state['uploaded_image'] = None
 
+if 'button_clicked' not in st.session_state:
+    st.session_state['button_clicked'] = False
+
+
 add_tab, search_tab = st.tabs(['Załaduj zdjęcie', 'Wyszukaj zdjęcie'])
 with add_tab:
     uploaded_file = st.file_uploader('Przeciągnij i upuść zdjęcie:', type=['jpg', 'jpeg', 'png'])
     
-    if uploaded_file:
-        if st.session_state['uploaded_image'] is None:
-            st.session_state['uploaded_image'] = uploaded_file
+    if not st.session_state['uploaded_image'] == uploaded_file:
+        st.session_state['uploaded_image'] = uploaded_file
+    
+    if st.session_state['uploaded_image']:
 
-        if st.button('Zapisz obraz'):
+        button = st.button('Zapisz obraz', disabled=st.session_state['button_clicked'])
+        if button:
+            st.session_state['button_clicked'] = True
+            st.rerun()
+
+        if st.session_state['button_clicked']:
             file_path = IMAGES_PATH / uploaded_file.name
             if file_path.exists():
                 st.error('Podany plik już istnieje. Zmień nazwę, aby zapisać.')
+                st.session_state['button_clicked'] = False
             else:
                 spinner_emoji = st.markdown(
                     'Poczekaj chwilę...  ' \
@@ -184,6 +198,9 @@ with add_tab:
                 add_description_to_db(image_description, uploaded_file.name)
                 spinner_emoji.empty()
                 success_message = st.success('Plik zapisano.')
+                st.session_state['button_clicked'] = False
+                st.rerun()
+
 with search_tab:
     search_image = st.text_input('Wyszukaj obraz')
     if search_image:
