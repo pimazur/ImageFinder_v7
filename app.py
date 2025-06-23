@@ -8,7 +8,6 @@ from openai import OpenAI
 import base64
 
 
-
 env = dotenv_values(".env")
 
 if 'QDRANT_URL' in st.secrets:
@@ -204,8 +203,12 @@ with add_tab:
 with search_tab:
     search_image = st.text_input('Wyszukaj obraz')
     if search_image:
-        result = search_descriptions_in_db(search_image)
-        st.image(
-            image=IMAGES_PATH / result,
-            use_container_width=True,
-        )
+        try:
+            result = search_descriptions_in_db(search_image)
+        except IndexError:
+            st.info('Nie ma jeszcze żadnych zapisanych zdjęć')
+        else:
+            st.image(
+                image=IMAGES_PATH / result,
+                use_container_width=True,
+            )
