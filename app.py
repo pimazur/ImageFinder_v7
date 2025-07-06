@@ -6,14 +6,15 @@ from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams, Distance
 from openai import OpenAI
 import base64
+from os import listdir
 
 
 env = dotenv_values(".env")
 
-if 'QDRANT_URL' in st.secrets:
-    env['QDRANT_URL'] = st.secrets['QDRANT_URL']
-if 'QDRANT_API_KEY' in st.secrets:
-    env['QDRANT_API_KEY'] = st.secrets['QDRANT_API_KEY']
+# if 'QDRANT_URL' in st.secrets:
+#     env['QDRANT_URL'] = st.secrets['QDRANT_URL']
+# if 'QDRANT_API_KEY' in st.secrets:
+#     env['QDRANT_API_KEY'] = st.secrets['QDRANT_API_KEY']
 
 
 EMBEDDING_MODEL = "text-embedding-3-large"
@@ -37,17 +38,21 @@ def get_qdrant_client():
     api_key=env['QDRANT_API_KEY'],
 )
 
-def assure_db_collection_exists():
+def create_db():
     qdrant_client = get_qdrant_client()
-    if not qdrant_client.collection_exists(QDRANT_COLLECTION_NAME):
-        print("Tworzę kolekcję")
-        qdrant_client.create_collection(
+    qdrant_client.create_collection(
             collection_name=QDRANT_COLLECTION_NAME,
             vectors_config=VectorParams(
                 size=EMBEDDING_DIM,
                 distance=Distance.COSINE,
             ),
         )
+
+def assure_db_collection_exists():
+    qdrant_client = get_qdrant_client()
+    if not qdrant_client.collection_exists(QDRANT_COLLECTION_NAME):
+        print("Tworzę kolekcję")
+        create_db()
     else:
         print("Kolekcja już istnieje")
 
@@ -150,6 +155,9 @@ if not st.session_state.get("openai_api_key"):
 IMAGES_PATH.mkdir(exist_ok=True)
 assure_db_collection_exists()
 
+if len(listdir(IMAGES_PATH)) == 0 and not get_qdrant_client().count(QDRANT_COLLECTION_NAME) == 0:
+    get_qdrant_client().delete_collection(QDRANT_COLLECTION_NAME)
+    create_db()
 
 st.header('Image Finder')
 st.write(
